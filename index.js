@@ -3,8 +3,22 @@
     // const express = require("express");
 
     import express from "express";
+    import {MongoClient} from 'mongodb';
+    import * as dotenv from 'dotenv' 
+    dotenv.config();
+
+    console.log(process.argv);
     const app = express();
-    const PORT = 3000;
+    const PORT = process.env.PORT;
+
+    const MONGO_URL = process.env.MONGO_URL;
+    const client =  new MongoClient(MONGO_URL);
+    await client.connect();
+    console.log("Your MongoDB is connected😍👍");
+
+    app.use(express.json());
+
+
     app.get("/", function(request, response) {
         response.send("Hey Welcome to Express Guyss 😍✨💜")
     });
@@ -100,17 +114,75 @@
             "id": "109"
             }
             ]
-    app.get("/movies", function(request, response) {
-        response.send(movies)
-    });
+    // app.get("/movies", function(request, response) {
+    //     response.send(movies)
+    // });
 
+    app.get("/movies", async function (request, response) {
 
-    app.get("/movies/:id", function(request, response) {
+        const movies = await client.db("mongo").collection("movies").find({}).toArray();
+        // console.log(movies);
+        response.send(movies);
+
+        
+    })
+
+    app.get("/movies/:id", async function(request, response) {
         const {id} = request.params;
-        //console.log(request.params)
-        console.log(id);
-        const movie = movies.find((mv)=>mv.id===id);
+        // //console.log(request.params)
+        // console.log(id);
+        // const movie = movies.find((mv)=>mv.id===id);
+
+        const movie = await client.db("mongo").collection("movies").findOne({id : id})
+        
         movie ? response.send(movie) :response.status(404).send({Error:"Sorry😕 No Such Data"})
     });
 
+    app.post("/movies", async function (request, response) {
+
+        const data = request.body;
+        // console.log(data);
+
+        const result = await client.db("mongo").collection("movies").insertMany(data);
+
+        response.send(result);
+
+    })
+
+    app.get("/", function (request, response) {
+        response.send("🙋‍♂️, 🌏 🎊✨🤩");
+      });
+
+    //   app.use("/movies", moviesRouter)
+
+    app.delete("/movies/:id", async function(request, response) {
+        const {id} = request.params;
+        // //console.log(request.params)
+        // console.log(id);
+        // const movie = movies.find((mv)=>mv.id===id);
+
+        const result = await client.db("mongo").collection("movies").deleteOne({id : id})
+        
+        result.deletedCount > 0 ? response.send({Message:"Sorry😕 Movie Deleted Already"}) :response.status(404).send({Error:"Sorry😕 No Such Data"})
+    });
+
+
+    app.put("/movies/:id", async function(request, response) {
+        const {id} = request.params;
+        const data = request.body;
+        // //console.log(request.params)
+        // console.log(id);
+        // const movie = movies.find((mv)=>mv.id===id);
+
+        const result = await client.db("mongo").collection("movies").updateOne({id : id}, {$set: data})
+        response.send(result);
+    });
+
+
+
+
     app.listen(PORT, ()=> console.log(`Your server ${PORT} has started 😉👍`));
+
+
+
+
