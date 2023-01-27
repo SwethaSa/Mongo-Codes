@@ -1,9 +1,11 @@
 import express from 'express';
 import { getAllMovies, getMoviesById, createMovies, deleteMovies, updateMovies } from '../services/movies.services.js';
+import { auth } from '../middleware/auth.js';
+
 const router = express.Router();
 
 
-router.get("/", async function (request, response) {
+router.get("/", auth, async function (request, response) {
 
     const movies = await getAllMovies();
     // console.log(movies);
@@ -34,7 +36,7 @@ router.post("/", async function (request, response) {
 
 })
 
-router.delete("/:id", async function(request, response) {
+router.delete("/:id", auth, async function(request, response) {
     const {id} = request.params;
     // //console.log(request.params)
     // console.log(id);
